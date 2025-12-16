@@ -11,6 +11,7 @@ contract DIDRegistry {
     mapping(address => DID) private dids;
     event DIDRegistered(address indexed owner, string documentCID);
     event DIDUpdated(address indexed owner, string documentCID);
+    event DIDDeleted(address indexed owner);
 
     modifier onlyDIDOwner() {
         require(dids[msg.sender].exists, "DID not registered");
@@ -32,5 +33,9 @@ contract DIDRegistry {
     }
     function hasDID(address owner) external view returns (bool) {
         return dids[owner].exists;
+    }
+    function deleteDID() external onlyDIDOwner {
+        delete dids[msg.sender];
+        emit DIDDeleted(msg.sender);
     }
 }
