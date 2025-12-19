@@ -1,57 +1,56 @@
-# Sample Hardhat 3 Beta Project (`mocha` and `ethers`)
+# Self-Sovereign Identity System for Digital Assets (NFTs, Licenses)
 
-This project showcases a Hardhat 3 Beta project using `mocha` for tests and the `ethers` library for Ethereum interactions.
+## Introduction
 
-To learn more about the Hardhat 3 Beta, please visit the [Getting Started guide](https://hardhat.org/docs/getting-started#getting-started-with-hardhat-3). To share your feedback, join our [Hardhat 3 Beta](https://hardhat.org/hardhat3-beta-telegram-group) Telegram group or [open an issue](https://github.com/NomicFoundation/hardhat/issues/new) in our GitHub issue tracker.
+This project implements a SSI system for digital assets management using smart contracts on Ethereum blockchain. The solution allows users to:
+* create and control their own decentralized identity (DID)
+* mint and transfer NFTs only if they own a valid identity
+* create, validate and revoke digital licenses associated with identities without depending on a central authority.
 
-## Project Overview
+## Objectives
+* implementing a register for DIDs
+* access control to digital assets based on the identity
+* demonstrating interaction between smart contracts
+* using ETH taxes and withdrawal pattern
+* automated testing and deploying on the Sepolia testnet
 
-This example project includes:
+## Architecture
+This project contains three main smart contracts: 
 
-- A simple Hardhat configuration file.
-- Foundry-compatible Solidity unit tests.
-- TypeScript integration tests using `mocha` and ethers.js
-- Examples demonstrating how to connect to different types of networks, including locally simulating OP mainnet.
+### DIDRegistry
+* manages decentralized identities (DIDs)
+* allows registering and checking the existence of a DID
+* used by the other contracts for identity validation
 
-## Usage
+### NFTAssetManager
+* ERC721 contract for NFTs management
+* allows NFT minting only for users with DID
+* allows NFT transfers only between users with DID
+* allows NFT linking with the identity
+* implements taxes for mint/burn/transfer
+* uses withdrawal pattern for withdrawing ETH safely
 
-### Running Tests
+### LicenseManager
+* manages digital licenses associated with identities
+* supports creating, validating and revoking licenses
+* verifies user's identity via DIDRegistry
 
-To run all the tests in the project, execute the following command:
+## Technologies
+* Solidity 0.8.28
+* Hardhat
+* Ethers.js
+* Mocha
+* OpenZeppelin Contracts (ERC721, Ownable)
+* Ethereum Sepolia Testnet
+* TypeScript
 
-```shell
-npx hardhat test
-```
+## Testing
+This project includes automated tests for
+* DIDRegistry(register and validate DID)
+* NFTAssetManager(mint, transfer, verify taxes)
+* LicenseManager(create, validate, revoke)
+* interaction between contracts
+These automated tests prove correct functionality of the code by ilustrating all the functions and the edge cases. They are implemented using Hardhat and Mocha.
 
-You can also selectively run the Solidity or `mocha` tests:
-
-```shell
-npx hardhat test solidity
-npx hardhat test mocha
-```
-
-### Make a deployment to Sepolia
-
-This project includes an example Ignition module to deploy the contract. You can deploy this module to a locally simulated chain or to Sepolia.
-
-To run the deployment to a local chain:
-
-```shell
-npx hardhat ignition deploy ignition/modules/Counter.ts
-```
-
-To run the deployment to Sepolia, you need an account with funds to send the transaction. The provided Hardhat configuration includes a Configuration Variable called `SEPOLIA_PRIVATE_KEY`, which you can use to set the private key of the account you want to use.
-
-You can set the `SEPOLIA_PRIVATE_KEY` variable using the `hardhat-keystore` plugin or by setting it as an environment variable.
-
-To set the `SEPOLIA_PRIVATE_KEY` config variable using `hardhat-keystore`:
-
-```shell
-npx hardhat keystore set SEPOLIA_PRIVATE_KEY
-```
-
-After setting the variable, you can run the deployment with the Sepolia network:
-
-```shell
-npx hardhat ignition deploy --network sepolia ignition/modules/Counter.ts
-```
+## Deploy
+All the contracts have been deployed on the Sepolia test network using Hardhat scripts dedicated for each contract. After deploy, contracts can be interogated and used through the demo script.
