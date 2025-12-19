@@ -19,6 +19,7 @@ contract DIDRegistry {
     }
 
     function registerDID(string calldata documentCID) external {
+        require(bytes(documentCID).length > 0, "Invalid DID document");
         require(!dids[msg.sender].exists, "DID already registered");
         dids[msg.sender] = DID(documentCID, true);
         emit DIDRegistered(msg.sender, documentCID);

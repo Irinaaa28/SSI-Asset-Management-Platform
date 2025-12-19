@@ -33,7 +33,6 @@ contract LicenseManager {
     }
 
     function createLicense(address owner, uint256 expiry, string calldata documentCID) external onlyDIDOwner returns (uint256) {
-        require(didRegistry.hasDID(owner), "Owner DID not registered");
         require(expiry > block.timestamp, "Expiry must be in the future"); // block.timestamp = 1735692000 for remix
         require(bytes(documentCID).length > 0, "Invalid document CID");
 

@@ -30,9 +30,14 @@ contract NFTAssetManager is ERC721, Ownable {
         didRegistry = DIDRegistry(didRegistryAddress);
     }
 
+    function calculateFee(uint256 baseFee) public pure returns (uint256) {
+        return (baseFee + 1) * 100;
+    }
+
     function mintNFT(string calldata metadataCID) external payable returns (uint256) {
         // require(msg.value >= MINT_FEE, "Insufficient mint fee");
-        require(msg.value == MINT_FEE, "Incorrect mint fee");
+        uint256 fee = calculateFee(MINT_FEE);
+        require(msg.value == fee, "Incorrect mint fee");
         require(didRegistry.hasDID(msg.sender), "DID not registered");
         require(bytes(metadataCID).length > 0, "Invalid metadata CID");
         
@@ -48,6 +53,8 @@ contract NFTAssetManager is ERC721, Ownable {
     }
 
     function burnNFT(uint256 tokenId) external payable tokenExists(_ownerOf(tokenId)){
+        uint256 fee = calculateFee(BURN_FEE);
+        require(msg.value == fee, "Incorrect burn fee");
         address _owner = _ownerOf(tokenId);
         require(msg.sender == _owner || msg.sender == owner(), "Not authorized to burn");
         _burn(tokenId);
@@ -65,8 +72,10 @@ contract NFTAssetManager is ERC721, Ownable {
     }
 
     function transferNFT(address to, uint256 tokenId) external payable {
+        uint256 fee = calculateFee(TRANSFER_FEE);
+        require(msg.value == fee, "Incorrect transfer fee");
         require(_ownerOf(tokenId) == msg.sender, "Not the owner of the token");
-        require(_didOwner[tokenId] == msg.sender, "DID not linked to token");
+        //require(_didOwner[tokenId] == msg.sender, "DID not linked to token");
         require(didRegistry.hasDID(to), "Receiver has no DID");
         _didOwner[tokenId] = to;
         _safeTransfer(msg.sender, to, tokenId, "");
