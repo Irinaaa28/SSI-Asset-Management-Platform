@@ -4,10 +4,11 @@ pragma solidity ^0.8.28;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./DIDRegistry.sol";
+import "./AssetAccessControl.sol";
 
-contract NFTAssetManager is ERC721, Ownable {
+contract NFTAssetManager is ERC721, Ownable, AssetAccessControl {
 
-    DIDRegistry public didRegistry;
+    //DIDRegistry public didRegistry;
     uint256 public constant MINT_FEE = 100000 wei;
     uint256 public constant BURN_FEE = 500000 wei;
     uint256 public constant TRANSFER_FEE = 500000 wei;
@@ -26,19 +27,19 @@ contract NFTAssetManager is ERC721, Ownable {
         _;
     }
 
-    constructor(address didRegistryAddress) ERC721("SSID Asset", "SSID") Ownable(msg.sender){
+    constructor(address didRegistryAddress) ERC721("SSID Asset", "SSID") Ownable(msg.sender) AssetAccessControl(didRegistryAddress) {
         didRegistry = DIDRegistry(didRegistryAddress);
     }
 
-    function calculateFee(uint256 baseFee) public pure returns (uint256) {
-        return (baseFee + 1) * 100;
-    }
+    // function calculateFee(uint256 baseFee) public pure returns (uint256) {
+    //     return (baseFee + 1) * 100;
+    // }
 
     function mintNFT(string calldata metadataCID) external payable returns (uint256) {
-        // require(msg.value >= MINT_FEE, "Insufficient mint fee");
         uint256 fee = calculateFee(MINT_FEE);
         require(msg.value == fee, "Incorrect mint fee");
-        require(didRegistry.hasDID(msg.sender), "DID not registered");
+        // require(didRegistry.hasDID(msg.sender), "DID not registered");
+        require(accessPolicy(msg.sender, msg.sender, msg.value), "Access policy failed");
         require(bytes(metadataCID).length > 0, "Invalid metadata CID");
         
         _tokenIdCounter++;
@@ -76,7 +77,8 @@ contract NFTAssetManager is ERC721, Ownable {
         require(msg.value == fee, "Incorrect transfer fee");
         require(_ownerOf(tokenId) == msg.sender, "Not the owner of the token");
         //require(_didOwner[tokenId] == msg.sender, "DID not linked to token");
-        require(didRegistry.hasDID(to), "Receiver has no DID");
+        // require(didRegistry.hasDID(to), "Receiver has no DID");
+        require(accessPolicy(msg.sender, to, msg.value), "Access policy failed");
         _didOwner[tokenId] = to;
         _safeTransfer(msg.sender, to, tokenId, "");
         emit NFTTransferred(msg.sender, to, tokenId);

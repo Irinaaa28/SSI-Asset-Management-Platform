@@ -47,8 +47,7 @@ describe("NFTAssetManager", function () {
     const { nft, owner } = await deployFixture();
     const fee = await nft.calculateFee(await nft.MINT_FEE());
 
-    await expect(nft.connect(owner).mintNFT("ipfs://asset", { value: fee }))
-                .to.be.revertedWith("DID not registered");
+    await expect(nft.mintNFT("ipfs://asset", { value: fee })).to.be.revertedWith("Access policy failed");
   });
 
   it("mintNFT - empty metadata should fail", async function () {
@@ -154,7 +153,7 @@ describe("NFTAssetManager", function () {
     const fee = await nft.calculateFee(await nft.TRANSFER_FEE());
 
     await expect(nft.connect(alice).transferNFT(charlie.address, 1, { value: fee }))
-                .to.be.revertedWith("Receiver has no DID");
+                .to.be.revertedWith("Access policy failed");
   });
 
   it("withdraw - correct", async function () {
