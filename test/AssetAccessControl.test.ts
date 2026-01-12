@@ -19,91 +19,65 @@ describe("AssetAccessControl (Diamond Inheritance)", function () {
     return { did, access, owner, alice, bob, charlie };
   }
 
-  it("accessPolicy - should return false if sender has no DID", async function () {
+  it("accessPolicy - fails if sender has no DID", async function () {
     const { did, access, alice, bob } = await deployFixture();
 
     await did.connect(bob).registerDID("ipfs://bobDID");
 
-    const result = await access.accessPolicy(
-      alice.address,
-      bob.address,
-      1
-    );
-
-    expect(result).to.equal(false);
+    await expect(access.accessPolicy(alice.address, bob.address, 100, 10000))
+                .to.be.revertedWithCustomError(access, "DIDPolicyViolation");
   });
 
-  it("accessPolicy - should return false if receiver has no DID", async function () {
+  it("accessPolicy - fails if receiver has no DID", async function () {
     const { did, access, alice, bob } = await deployFixture();
 
     await did.connect(alice).registerDID("ipfs://aliceDID");
 
-    const result = await access.accessPolicy(
-      alice.address,
-      bob.address,
-      1
-    );
-
-    expect(result).to.equal(false);
+    await expect(access.accessPolicy(alice.address, bob.address, 100, 10000))
+                .to.be.revertedWithCustomError(access, "DIDPolicyViolation");
   });
 
-  it("accessPolicy - should return false if fee is zero", async function () {
+  it("accessPolicy - fails if fee is incorrect", async function () {
     const { did, access, alice, bob } = await deployFixture();
 
     await did.connect(alice).registerDID("ipfs://aliceDID");
     await did.connect(bob).registerDID("ipfs://bobDID");
 
-    const result = await access.accessPolicy(
-      alice.address,
-      bob.address,
-      0
-    );
-
-    expect(result).to.equal(false);
+    await expect(access.accessPolicy(alice.address, bob.address, 100, 1))
+                .to.be.revertedWithCustomError(access, "FeePolicyViolation");
   });
 
-  it("accessPolicy - should return true if both users have DID and fee is paid", async function () {
+  it("accessPolicy - succeeds if both users have DID and fee is correct", async function () {
     const { did, access, alice, bob } = await deployFixture();
 
     await did.connect(alice).registerDID("ipfs://aliceDID");
     await did.connect(bob).registerDID("ipfs://bobDID");
 
-    const result = await access.accessPolicy(
-      alice.address,
-      bob.address,
-      1
-    );
+    const baseFee = 100;
+    const expectedFee = await access.calculateFee(baseFee);
 
-    expect(result).to.equal(true);
+    await expect(access.accessPolicy(alice.address, bob.address, expectedFee, baseFee));
   });
 
-  it("accessPolicy - should combine logic from both parents (diamond resolution)", async function () {
+  it("accessPolicy - demonstrates diamond inheritance resolution", async function () {
     const { did, access, alice, bob, charlie } = await deployFixture();
 
     await did.connect(alice).registerDID("ipfs://aliceDID");
     await did.connect(bob).registerDID("ipfs://bobDID");
 
-    const ok = await access.accessPolicy(
-      alice.address,
-      bob.address,
-      100
-    );
+    const baseFee = 100;
+    const correctFee = await access.calculateFee(baseFee);
 
-    const failNoDID = await access.accessPolicy(
-      alice.address,
-      charlie.address,
-      100
-    );
+    // everything ok
+    await expect(access.accessPolicy(alice.address, bob.address, correctFee, baseFee));
 
-    const failNoFee = await access.accessPolicy(
-      alice.address,
-      bob.address,
-      0
-    );
+    // sender or receiver without DID
+    await expect(access.accessPolicy(alice.address, charlie.address, correctFee, baseFee))
+    .to.be.revertedWithCustomError(access, "DIDPolicyViolation");
 
-    expect(ok).to.equal(true);
-    expect(failNoDID).to.equal(false);
-    expect(failNoFee).to.equal(false);
+    // wrong fee
+    await expect(access.accessPolicy(alice.address, bob.address, 1, baseFee))
+                .to.be.revertedWithCustomError(access, "FeePolicyViolation");
   });
 
 });

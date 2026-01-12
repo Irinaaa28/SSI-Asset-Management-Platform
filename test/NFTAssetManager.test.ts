@@ -40,14 +40,14 @@ describe("NFTAssetManager", function () {
     const { nft, alice } = await deployFixture();
 
     await expect( nft.connect(alice).mintNFT("ipfs://asset", { value: 1 }))
-                .to.be.revertedWith("Incorrect mint fee");
+                .to.be.revertedWithCustomError(nft, "FeePolicyViolation");
   });
 
   it("mintNFT - unregistered user should fail", async function () {
     const { nft, owner } = await deployFixture();
     const fee = await nft.calculateFee(await nft.MINT_FEE());
 
-    await expect(nft.mintNFT("ipfs://asset", { value: fee })).to.be.revertedWith("Access policy failed");
+    await expect(nft.mintNFT("ipfs://asset", { value: fee })).to.be.revertedWithCustomError(nft, "DIDPolicyViolation");
   });
 
   it("mintNFT - empty metadata should fail", async function () {
@@ -133,7 +133,7 @@ describe("NFTAssetManager", function () {
     const { nft, alice, bob } = await deployFixture();
     await mint(nft, alice);
 
-    await expect(nft.connect(alice).transferNFT(bob.address, 1, { value: 1 })).to.be.revertedWith("Incorrect transfer fee");
+    await expect(nft.connect(alice).transferNFT(bob.address, 1, { value: 1 })).to.be.revertedWithCustomError(nft, "FeePolicyViolation");
   });
 
   it("transferNFT - sender not owner should fail", async function () {
@@ -153,7 +153,7 @@ describe("NFTAssetManager", function () {
     const fee = await nft.calculateFee(await nft.TRANSFER_FEE());
 
     await expect(nft.connect(alice).transferNFT(charlie.address, 1, { value: fee }))
-                .to.be.revertedWith("Access policy failed");
+                .to.be.revertedWithCustomError(nft, "DIDPolicyViolation");
   });
 
   it("withdraw - correct", async function () {

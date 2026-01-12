@@ -4,6 +4,8 @@ pragma solidity ^0.8.28;
 import "./BasePolicy.sol";
 import "./DIDRegistry.sol";
 
+error DIDPolicyViolation(string message);
+
 abstract contract DIDPolicy is BasePolicy {
     DIDRegistry public didRegistry;
 
@@ -11,7 +13,13 @@ abstract contract DIDPolicy is BasePolicy {
         didRegistry = DIDRegistry(didRegistryAddress);
     }
 
-    function accessPolicy(address from, address to, uint256 ) public view virtual override returns (bool) {
-        return didRegistry.hasDID(from) && didRegistry.hasDID(to);
+    function accessPolicy(address from, address to, uint256, uint256) public view virtual override {
+        if (!didRegistry.hasDID(from) || !didRegistry.hasDID(to)) {
+            revert DIDPolicyViolation(showMessage());
+        }
+    }
+
+    function showMessage() public pure virtual override returns (string memory) {
+        return "Sender or receiver has no DID";
     }
 }
